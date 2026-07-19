@@ -1,50 +1,88 @@
-# Multi-Tenant CRM
+# Multi-Tenant CRM 
 
-A production-ready Multi-Tenant Customer Relationship Management (CRM) system built from scratch using modern backend technologies and industry best practices.
+A production-ready Multi-Tenant Customer Relationship Management (CRM) platform built from scratch using modern backend and frontend technologies.
 
-## 🎯 Project Goal
+This project is being developed as a real-world SaaS application by following industry-standard architecture, security best practices, clean code principles, and scalable design patterns. The primary goal is to gain hands-on experience with modern software engineering while building a strong portfolio project.
 
-The goal of this project is to build a scalable SaaS CRM application that follows real-world software architecture and development standards.
+## Project Objectives
 
-This project is being developed to:
+* Build a production-ready Multi-Tenant CRM
+* Learn backend development by building, not by watching tutorials
+* Follow clean architecture and industry best practices
+* Implement secure authentication and authorization
+* Design scalable REST APIs
+* Integrate AI-powered features
+* Learn DevOps tools through real project implementation
+* Prepare for backend developer interviews
 
-- Learn production-level backend development.
-- Build a real-world SaaS application.
-- Understand scalable software architecture.
-- Gain hands-on experience with modern backend technologies.
-- Prepare for backend developer interviews.
-
-## 🛠️ Planned Technology Stack
+## Planned Tech Stack
 
 ### Backend
-- Python
-- Django
-- Django REST Framework
+
+* Python
+* Django
+* Django REST Framework (DRF)
+* PostgreSQL
 
 ### Frontend
-- React
 
-### Database
-- PostgreSQL
+* React
 
-### Additional Technologies
-- JWT Authentication
-- Redis
-- Celery
-- Docker
-- Docker Compose
-- Swagger / OpenAPI
-- AWS
-- Kubernetes (Basic)
-- Unit Testing
-- AI Assistant (Planned)
+### Authentication & Security
 
-## Project Status
+* JWT Authentication
+* Role-Based Access Control (RBAC)
 
-Project initialization in progress.
+### Background Processing
 
-This project will be developed step by step by following real software development practices.
+* Redis
+* Celery
 
-## 📄 License
+### API Documentation
 
-This project is created for learning, portfolio, and interview preparation.
+* Swagger / OpenAPI
+
+### DevOps
+
+* Docker
+* Docker Compose
+* AWS
+* Kubernetes (Basic)
+
+### AI Features
+
+* AI Chatbot
+* AI Assistant
+* Document Q&A
+* AI-generated Summaries
+
+### Testing
+
+* Unit Testing
+* API Testing
+
+### Version Control
+
+* Git
+* GitHub
+
+## Project Structure
+
+```text
+multi-tenant-crm-ai/
+├── backend/
+├── frontend/
+├── docs/
+├── .gitignore
+└── README.md
+```
+
+## Development Status
+
+🚧 Project initialization and architecture planning completed.
+
+This repository will be updated step by step following a day-by-day learning roadmap.
+
+## License
+
+This project is created for learning, portfolio development, and interview preparation.
