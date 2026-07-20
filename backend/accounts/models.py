@@ -3,6 +3,7 @@ from django.db import models
 
 from .managers import UserManager
 
+
 # Create your models here.
 class User(AbstractUser):
     """
