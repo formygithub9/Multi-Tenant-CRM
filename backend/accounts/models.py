@@ -13,8 +13,5 @@ class User(AbstractUser):
 
     objects = UserManager()
 
-    class Meta:
-        db_table = "accounts_user"
-
     def __str__(self):
-        return self.username
+        return f"{self.username} ({self.email})"
