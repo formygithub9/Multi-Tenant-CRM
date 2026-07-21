@@ -37,6 +37,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # Local Apps
     "accounts",
+    "tenants",
 
     # Third-party Apps
     "rest_framework",
