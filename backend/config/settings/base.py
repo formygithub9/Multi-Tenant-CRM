@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     # Local Apps
     "accounts",
     "tenants",
+    "authorization",
 
     # Third-party Apps
     "rest_framework",
