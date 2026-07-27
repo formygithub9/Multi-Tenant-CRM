@@ -45,7 +45,7 @@ class Membership(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey("accounts.User",on_delete=models.CASCADE,related_name="memberships",)
     tenant = models.ForeignKey("Tenant",on_delete=models.CASCADE,related_name="memberships",)
-    role = models.ForeignKey("authorization.Role",on_delete=models.PROTECT,related_name="memberships",)
+    role = models.ForeignKey("rbac.Role",on_delete=models.PROTECT,related_name="memberships",)
     is_active = models.BooleanField(default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 

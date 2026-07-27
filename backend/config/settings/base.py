@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "tenants",
     "authorization",
     "customers",
+    "rbac",
 
     # Third-party Apps
     "rest_framework",
@@ -94,6 +95,15 @@ DATABASES = {
         "PASSWORD": env("DB1_PASSWORD"),
         "HOST": env("DB1_HOST"),
         "PORT": env("DB1_PORT"),
+    },
+
+    "tenant_db": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB2_NAME"),
+        "USER": env("DB2_USER"),
+        "PASSWORD": env("DB2_PASSWORD"),
+        "HOST": env("DB2_HOST"),
+        "PORT": env("DB2_PORT"),
     },
 }
 
@@ -168,3 +178,7 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+DATABASE_ROUTERS = [
+    "config.database_router.DatabaseRouter",
+]

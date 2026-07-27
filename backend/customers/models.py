@@ -14,14 +14,8 @@ class Customer(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     tenant = models.ForeignKey("tenants.Tenant",on_delete=models.CASCADE,related_name="customers",)
-    customer_code = models.CharField(max_length=30)
-
-    customer_type = models.CharField(
-        max_length=20,
-        choices=CustomerType.choices,
-        default=CustomerType.BUSINESS,
-    )
-
+    customer_code = models.CharField(max_length=30,db_index=True)
+    customer_type = models.CharField(max_length=20,choices=CustomerType.choices,default=CustomerType.BUSINESS,)
     contact_name = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255,blank=True,)
     email = models.EmailField(blank=True)
@@ -36,7 +30,7 @@ class Customer(models.Model):
     class Meta:
         db_table = "customers"
 
-        ordering = ["name"]
+        ordering = ["contact_name"]
 
         constraints = [
             models.UniqueConstraint(
