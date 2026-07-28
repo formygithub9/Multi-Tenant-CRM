@@ -13,7 +13,7 @@ class Customer(models.Model):
         BUSINESS = "BUSINESS", "Business"
 
     id = models.BigAutoField(primary_key=True)
-    tenant = models.ForeignKey("tenants.Tenant",on_delete=models.CASCADE,related_name="customers",)
+    tenant_id = models.PositiveBigIntegerField(db_index=True)
     customer_code = models.CharField(max_length=30,db_index=True)
     customer_type = models.CharField(max_length=20,choices=CustomerType.choices,default=CustomerType.BUSINESS,)
     contact_name = models.CharField(max_length=255)
@@ -32,16 +32,20 @@ class Customer(models.Model):
 
         ordering = ["contact_name"]
 
+        indexes = [
+        models.Index(fields=["tenant_id", "customer_code"]),
+        ]
+
         constraints = [
             models.UniqueConstraint(
-                fields=["tenant", "customer_code"],
+                fields=["tenant_id", "customer_code"],
                 name="unique_customer_code_per_tenant",
             ),
             models.UniqueConstraint(
-                fields=["tenant", "gst_number"],
+                fields=["tenant_id", "gst_number"],
                 name="unique_customer_gst_per_tenant",
             ),
         ]
 
     def __str__(self):
-        return f"{self.customer_code} - {self.name}"
+        return f"{self.customer_code} - {self.contact_name}"

@@ -15,5 +15,4 @@ class User(AbstractUser):
         return f"{self.username} ({self.email})"
     
 
-    
-    
+

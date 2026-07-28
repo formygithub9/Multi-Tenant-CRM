@@ -97,7 +97,7 @@ DATABASES = {
         "PORT": env("DB1_PORT"),
     },
 
-    "tenant_db": {
+    "shared_db": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("DB2_NAME"),
         "USER": env("DB2_USER"),
@@ -105,6 +105,15 @@ DATABASES = {
         "HOST": env("DB2_HOST"),
         "PORT": env("DB2_PORT"),
     },
+
+    "enterprise_db": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB3_NAME"),
+        "USER": env("DB3_USER"),
+        "PASSWORD": env("DB3_PASSWORD"),
+        "HOST": env("DB3_HOST"),
+        "PORT": env("DB3_PORT"),
+    },    
 }
 
 

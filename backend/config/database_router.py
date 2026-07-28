@@ -1,17 +1,19 @@
 class DatabaseRouter:
 
     DEFAULT_APPS = {
-        "accounts",
         "tenants",
+    }
+
+    TENANT_APPS = {
+        "accounts",
         "authorization",
+        "rbac",
+        "customers",
+
         "auth",
         "contenttypes",
         "admin",
         "sessions",
-    }
-
-    TENANT_APPS = {
-        "customers",
     }
 
     def db_for_read(self, model, **hints):
@@ -19,7 +21,7 @@ class DatabaseRouter:
             return "default"
 
         if model._meta.app_label in self.TENANT_APPS:
-            return "tenant_db"
+            return "shared_db"
 
         return None
 
@@ -28,7 +30,7 @@ class DatabaseRouter:
             return "default"
 
         if model._meta.app_label in self.TENANT_APPS:
-            return "tenant_db"
+            return "shared_db"
 
         return None
 
@@ -41,6 +43,7 @@ class DatabaseRouter:
             return db == "default"
 
         if app_label in self.TENANT_APPS:
-            return db == "tenant_db"
+            # return db == "shared_db"
+            return db in ("shared_db", "enterprise_db")
 
         return None

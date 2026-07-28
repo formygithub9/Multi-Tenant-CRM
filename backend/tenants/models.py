@@ -5,7 +5,11 @@ from django.utils.text import slugify
 class Tenant(models.Model):
     id = models.BigAutoField(primary_key=True,)
     name = models.CharField(max_length=255,)
-    slug = models.SlugField(max_length=255,unique=True,)
+    slug = models.SlugField(max_length=255,unique=True,db_index=True,)
+    company_mobile = models.CharField(max_length=20,unique=True,db_index=True,)
+    company_email = models.EmailField(unique=True,db_index=True,)
+    database_alias = models.CharField(max_length=255,db_index=True,)
+    is_active = models.BooleanField(default=True,)
     created_at = models.DateTimeField(auto_now_add=True,)
     updated_at = models.DateTimeField(auto_now=True,)
 
@@ -35,26 +39,3 @@ class Tenant(models.Model):
     def __str__(self):
         return self.name
     
-class Membership(models.Model):
-    """
-    Associates a user with a tenant and assigns a role.
-
-    Example:
-        Roman -> Basawa -> Admin
-    """
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey("accounts.User",on_delete=models.CASCADE,related_name="memberships",)
-    tenant = models.ForeignKey("Tenant",on_delete=models.CASCADE,related_name="memberships",)
-    role = models.ForeignKey("rbac.Role",on_delete=models.PROTECT,related_name="memberships",)
-    is_active = models.BooleanField(default=True)
-    joined_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "memberships"
-
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "tenant"],
-                name="unique_user_tenant",
-            )
-        ]

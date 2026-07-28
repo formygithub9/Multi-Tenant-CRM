@@ -17,6 +17,9 @@ class PermissionType(models.Model):
     class Meta:
         db_table = "permission_types"
         ordering = ["name"]
+        indexes = [
+        models.Index(fields=["name"]),
+        ]
 
     def __str__(self):
         return self.name
@@ -52,6 +55,7 @@ class Permission(models.Model):
     id = models.BigAutoField(primary_key=True)
     resource = models.ForeignKey("Resource",on_delete=models.CASCADE,related_name="permissions",)
     permission_type = models.ForeignKey("PermissionType",on_delete=models.CASCADE,related_name="permissions",)
+    code = models.CharField(max_length=100,unique=True,db_index=True,)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
