@@ -1,3 +1,5 @@
+from core.db_context import get_current_database
+
 class DatabaseRouter:
 
     DEFAULT_APPS = {
@@ -21,7 +23,7 @@ class DatabaseRouter:
             return "default"
 
         if model._meta.app_label in self.TENANT_APPS:
-            return "shared_db"
+            return get_current_database()
 
         return None
 
@@ -30,7 +32,7 @@ class DatabaseRouter:
             return "default"
 
         if model._meta.app_label in self.TENANT_APPS:
-            return "shared_db"
+            return get_current_database()
 
         return None
 
