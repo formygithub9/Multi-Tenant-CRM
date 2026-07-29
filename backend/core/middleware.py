@@ -19,6 +19,9 @@ class TenantMiddleware:
 
             set_current_database(database_alias)
 
+            # if database_alias:
+            #     set_current_database(database_alias)
+
         try:
             response = self.get_response(request)
             return response
