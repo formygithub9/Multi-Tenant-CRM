@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .services import AuthenticationService
+from core.responses import APIResponse
 
 from .serializers import LoginSerializer
 
@@ -18,4 +19,4 @@ class LoginAPIView(APIView):
 
         response = AuthenticationService.login(**serializer.validated_data)
 
-        return Response(response)
+        return APIResponse.success(message="Login successful.",data=response,)
