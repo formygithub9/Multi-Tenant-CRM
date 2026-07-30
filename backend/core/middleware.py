@@ -1,7 +1,6 @@
 from core.db_context import (set_current_database,clear_current_database,)
 from tenants.services import TenantService
 
-
 class TenantMiddleware:
 
     def __init__(self, get_response):
@@ -14,13 +13,8 @@ class TenantMiddleware:
         if company_mobile:
             database_alias = TenantService.get_database_alias(company_mobile)
 
-            if not database_alias:
-                raise Exception("Invalid company mobile.")
-
-            set_current_database(database_alias)
-
-            # if database_alias:
-            #     set_current_database(database_alias)
+            if database_alias:
+                set_current_database(database_alias)
 
         try:
             response = self.get_response(request)
