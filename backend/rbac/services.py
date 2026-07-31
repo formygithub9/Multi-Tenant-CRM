@@ -1,4 +1,5 @@
 from rbac.models import Role
+from rbac.models import Membership
 
 class RoleService:
 
@@ -24,3 +25,14 @@ class RoleService:
             roles[role_name] = role
 
         return roles
+
+class MembershipService:
+
+    @staticmethod
+    def create_membership(user, tenant, role):
+
+        return Membership.objects.create(
+            user=user,
+            tenant_id=tenant.id,
+            role=role,
+        )
