@@ -24,7 +24,7 @@ class PermissionType(models.Model):
     def __str__(self):
         return self.name
     
-class Resource(models.Model):
+class Module(models.Model):
     """
     Represents an application resource/module.
 
@@ -39,7 +39,7 @@ class Resource(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "resources"
+        db_table = "modules"
         ordering = ["name"]
 
     def __str__(self):
@@ -53,7 +53,7 @@ class Permission(models.Model):
         Customer + View
     """
     id = models.BigAutoField(primary_key=True)
-    resource = models.ForeignKey("Resource",on_delete=models.CASCADE,related_name="permissions",)
+    module = models.ForeignKey("Module",on_delete=models.CASCADE,related_name="permissions",)
     permission_type = models.ForeignKey("PermissionType",on_delete=models.CASCADE,related_name="permissions",)
     code = models.CharField(max_length=100,unique=True,db_index=True,)
     is_active = models.BooleanField(default=True)
@@ -65,11 +65,11 @@ class Permission(models.Model):
 
         constraints = [
             models.UniqueConstraint(
-                fields=["resource", "permission_type"],
-                name="unique_resource_permission_type",
+                fields=["module", "permission_type"],
+                name="unique_module_permission_type",
             )
         ]
 
     def __str__(self):
-        return f"{self.resource.name}.{self.permission_type.name}"
+        return f"{self.module.name}.{self.permission_type.name}"
     
