@@ -27,16 +27,20 @@ class SignupView(APIView):
     permission_classes = []
 
     def post(self, request):
+        try:
+            serializer = SignupSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        serializer = SignupSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+            response = AuthenticationService.signup(
+                **serializer.validated_data
+            )
 
-        response = AuthenticationService.signup(
-            **serializer.validated_data
-        )
-
-        return APIResponse.success(
-            message="Account created successfully.",
-            data=response,
-            status_code=status.HTTP_201_CREATED,
-        )
+            return APIResponse.success(
+                message="Account created successfully.",
+                data=response,
+                status_code=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            print(type(e))
+            print(e)
+            raise

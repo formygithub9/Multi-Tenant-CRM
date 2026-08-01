@@ -47,18 +47,22 @@ class AuthenticationService:
             "tokens": cls.generate_tokens(user),
         }
 
-class AuthenticationService:
-
     @classmethod
     @transaction.atomic
     def signup(cls,company_name,company_mobile,company_email,username,email,password,):
-        tenant = Tenant.objects.create(
-            name=company_name,
+        if User.objects.filter(username=username).exists():
+                    raise BadRequestException("Username already exists.")
+        
+        if User.objects.filter(email=email).exists():
+            raise BadRequestException("Email already exists.")
+        
+        tenant = TenantService.create_tenant(
+            company_name=company_name,
             company_mobile=company_mobile,
             company_email=company_email,
-            database_alias="shared_db",
         )
         roles = RoleService.create_default_roles(tenant)
+        
         user = User.objects.create_user(
             username=username,
             email=email,

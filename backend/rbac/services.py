@@ -18,7 +18,7 @@ class RoleService:
         for role_name in cls.DEFAULT_ROLES:
 
             role = Role.objects.create(
-                tenant=tenant,
+                tenant_id=tenant.id,
                 name=role_name,
             )
 
