@@ -14,7 +14,7 @@ class Customer(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     tenant_id = models.PositiveBigIntegerField(db_index=True)
-    customer_code = models.CharField(max_length=30,db_index=True)
+    customer_code = models.CharField(max_length=30,db_index=True,)
     customer_type = models.CharField(max_length=20,choices=CustomerType.choices,default=CustomerType.BUSINESS,)
     contact_name = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255,blank=True,)
@@ -22,6 +22,11 @@ class Customer(models.Model):
     mobile = models.CharField(max_length=20,blank=True,)
     gst_number = models.CharField(max_length=20,blank=True,)
     pan_number = models.CharField(max_length=20,blank=True,)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100,blank=True,)
+    state = models.CharField(max_length=100,blank=True,)
+    country = models.CharField(max_length=100,blank=True,)
+    pincode = models.CharField(max_length=20,blank=True,)
     remarks = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -30,20 +35,17 @@ class Customer(models.Model):
     class Meta:
         db_table = "customers"
 
-        ordering = ["contact_name"]
+        ordering = ["customer_code"]
 
         indexes = [
-        models.Index(fields=["tenant_id", "customer_code"]),
+            models.Index(fields=["tenant_id", "customer_code"]),
+            models.Index(fields=["tenant_id", "contact_name"]),
         ]
 
         constraints = [
             models.UniqueConstraint(
                 fields=["tenant_id", "customer_code"],
                 name="unique_customer_code_per_tenant",
-            ),
-            models.UniqueConstraint(
-                fields=["tenant_id", "gst_number"],
-                name="unique_customer_gst_per_tenant",
             ),
         ]
 
