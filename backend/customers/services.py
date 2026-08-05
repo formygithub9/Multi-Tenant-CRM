@@ -18,4 +18,15 @@ class CustomerService:
     @classmethod
     @transaction.atomic
     def create_customer(cls, validated_data):
-        pass
+
+        tenant_id = validated_data["tenant_id"]
+
+        validated_data["customer_code"] = cls.generate_customer_code(
+            tenant_id,
+        )
+
+        customer = Customer.objects.create(
+            **validated_data,
+        )
+
+        return customer
