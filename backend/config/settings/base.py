@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "authorization",
     "customers",
     "rbac",
+    "common",
 
     # Third-party Apps
     "rest_framework",
