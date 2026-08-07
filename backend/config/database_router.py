@@ -11,6 +11,7 @@ class DatabaseRouter:
         "authorization",
         "rbac",
         "customers",
+        "common",
 
         "auth",
         "contenttypes",

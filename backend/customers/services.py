@@ -2,6 +2,8 @@ from customers.models import Customer
 from django.db import transaction
 from common.models import Sequence
 from common.services import SequenceService
+from core.db_context import get_current_database
+
 
 class CustomerService:
 
@@ -16,17 +18,20 @@ class CustomerService:
         return f"CUS{number:06d}"
 
     @classmethod
-    @transaction.atomic
     def create_customer(cls, validated_data):
 
-        tenant_id = validated_data["tenant_id"]
+        database = get_current_database()
 
-        validated_data["customer_code"] = cls.generate_customer_code(
-            tenant_id,
-        )
+        with transaction.atomic(using=database):
 
-        customer = Customer.objects.create(
-            **validated_data,
-        )
+            tenant_id = validated_data["tenant_id"]
 
-        return customer
+            validated_data["customer_code"] = cls.generate_customer_code(
+                tenant_id,
+            )
+
+            customer = Customer.objects.create(
+                **validated_data,
+            )
+
+            return customer
