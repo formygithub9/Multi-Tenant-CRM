@@ -3,6 +3,7 @@ from django.db import transaction
 from common.models import Sequence
 from common.services import SequenceService
 from core.db_context import get_current_database
+from core.exceptions import NotFoundException
 
 
 class CustomerService:
@@ -25,13 +26,21 @@ class CustomerService:
         with transaction.atomic(using=database):
 
             tenant_id = validated_data["tenant_id"]
-
-            validated_data["customer_code"] = cls.generate_customer_code(
-                tenant_id,
-            )
-
-            customer = Customer.objects.create(
-                **validated_data,
-            )
+            validated_data["customer_code"] = cls.generate_customer_code(tenant_id,)
+            customer = Customer.objects.create(**validated_data,)
 
             return customer
+
+    @classmethod
+    def get_customers(cls, tenant_id):
+        return (Customer.objects.filter(tenant_id=tenant_id,is_active=True,).order_by("-id"))
+
+    @classmethod
+    def get_customer_by_id(cls, tenant_id, customer_id):
+
+        customer = Customer.objects.filter(tenant_id=tenant_id,id=customer_id,is_active=True,).first()
+
+        if not customer:
+            raise NotFoundException("Customer not found.")
+
+        return customer

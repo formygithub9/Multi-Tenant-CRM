@@ -1,7 +1,8 @@
 from django.urls import path
 
-from customers.views import CustomerCreateAPIView
+from customers.views import *
 
 urlpatterns = [
-    path("",CustomerCreateAPIView.as_view(),name="customer-create",),
+    path("", CustomerAPIView.as_view(), name="customers"),
+    path("<int:customer_id>/", CustomerAPIView.as_view(), name="customer-detail"),
 ]

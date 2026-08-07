@@ -20,8 +20,8 @@ class Customer(models.Model):
     company_name = models.CharField(max_length=255,blank=True,)
     email = models.EmailField(blank=True)
     mobile = models.CharField(max_length=20,blank=True,)
-    gst_number = models.CharField(max_length=20,blank=True,)
-    pan_number = models.CharField(max_length=20,blank=True,)
+    gst_number = models.CharField(max_length=20,blank=True,null=True,)
+    pan_number = models.CharField(max_length=20,blank=True,null=True,)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100,blank=True,)
     state = models.CharField(max_length=100,blank=True,)
@@ -47,6 +47,7 @@ class Customer(models.Model):
                 fields=["tenant_id", "customer_code"],
                 name="unique_customer_code_per_tenant",
             ),
+
         ]
 
     def __str__(self):
