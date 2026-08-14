@@ -12,6 +12,7 @@ class DatabaseRouter:
         "rbac",
         "customers",
         "common",
+        "contacts",
 
         "auth",
         "contenttypes",
