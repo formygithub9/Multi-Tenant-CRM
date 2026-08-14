@@ -44,3 +44,34 @@ class CustomerService:
             raise NotFoundException("Customer not found.")
 
         return customer
+
+    @classmethod
+    def update_customer(cls, customer, validated_data):
+
+        database = get_current_database()
+
+        with transaction.atomic(using=database):
+
+            for field, value in validated_data.items():
+                setattr(customer, field, value)
+
+            customer.save(
+                update_fields=[
+                    *validated_data.keys(),
+                    "updated_at",
+                ]
+            )
+
+        return customer
+
+    @classmethod
+    def delete_customer(cls, customer):
+
+        database = get_current_database()
+
+        with transaction.atomic(using=database):
+
+            customer.is_active = False
+            customer.save(update_fields=["is_active", "updated_at"])
+
+        return customer
