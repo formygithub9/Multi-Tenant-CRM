@@ -32,3 +32,57 @@ class LeadCreateSerializer(serializers.ModelSerializer):
         return LeadService.create_lead(
             validated_data,
         )
+
+class LeadListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Lead
+
+        fields = (
+            "id",
+            "lead_code",
+            "contact_name",
+            "company_name",
+            "email",
+            "mobile",
+            "source",
+            "status",
+            "notes",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+
+class LeadUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Lead
+
+        fields = (
+            "contact_name",
+            "company_name",
+            "email",
+            "mobile",
+            "source",
+            "status",
+            "notes",
+        )
+
+    def validate(self, attrs):
+
+        email = attrs.get(
+            "email",
+            self.instance.email,
+        )
+
+        mobile = attrs.get(
+            "mobile",
+            self.instance.mobile,
+        )
+
+        if not email and not mobile:
+            raise serializers.ValidationError(
+                "Either email or mobile is required."
+            )
+
+        return attrs
