@@ -14,6 +14,7 @@ class Sequence(models.Model):
 
     class SequenceType(models.TextChoices):
         CUSTOMER = "CUSTOMER", "Customer"
+        LEAD = "LEAD", "Lead"
         VENDOR = "VENDOR", "Vendor"
         PRODUCT = "PRODUCT", "Product"
         SALES_ORDER = "SALES_ORDER", "Sales Order"

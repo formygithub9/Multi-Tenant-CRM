@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rbac",
     "common",
     "contacts",
+    "leads",
 
     # Third-party Apps
     "rest_framework",

@@ -13,6 +13,7 @@ class DatabaseRouter:
         "customers",
         "common",
         "contacts",
+        "leads",
 
         "auth",
         "contenttypes",
