@@ -6,6 +6,10 @@ from leads.models import Lead
 from common.models import Sequence
 from common.services import SequenceService
 
+from customers.models import Customer
+from contacts.models import Contact
+from core.exceptions import BadRequestException, NotFoundException
+
 
 class LeadService:
 
@@ -37,3 +41,68 @@ class LeadService:
             )
 
         return lead
+
+    @classmethod
+    def convert_lead(cls, tenant_id, lead_id):
+
+        database = get_current_database()
+
+        with transaction.atomic(using=database):
+
+            lead = (
+                Lead.objects
+                .select_for_update()
+                .filter(
+                    tenant_id=tenant_id,
+                    id=lead_id,
+                    is_active=True,
+                )
+                .first()
+            )
+
+            if not lead:
+                raise NotFoundException("Lead not found.")
+
+            if lead.status == Lead.LeadStatus.CONVERTED:
+                raise BadRequestException(
+                    "Lead has already been converted."
+                )
+
+            if lead.status != Lead.LeadStatus.QUALIFIED:
+                raise BadRequestException(
+                    "Only qualified leads can be converted."
+                )
+
+            customer = Customer.objects.create(
+                tenant_id=tenant_id,
+                customer_code=cls.generate_customer_code(tenant_id),
+                customer_type=Customer.CustomerType.BUSINESS,
+                contact_name=lead.contact_name,
+                company_name=lead.company_name,
+                email=lead.email,
+                mobile=lead.mobile,
+                remarks=lead.notes,
+            )
+
+            name_parts = lead.contact_name.strip().split(maxsplit=1)
+
+            contact = Contact.objects.create(
+                tenant_id=tenant_id,
+                customer_id=customer.id,
+                first_name=name_parts[0],
+                last_name=name_parts[1] if len(name_parts) > 1 else "",
+                email=lead.email,
+                mobile=lead.mobile,
+                is_primary=True,
+            )
+
+            lead.status = Lead.LeadStatus.CONVERTED
+
+            lead.save(
+                update_fields=[
+                    "status",
+                    "updated_at",
+                ]
+            )
+
+        return customer, contact

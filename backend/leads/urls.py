@@ -5,4 +5,5 @@ from leads.views import LeadAPIView
 
 urlpatterns = [
     path("",LeadAPIView.as_view(),name="leads",),
+    path("<int:lead_id>/convert/",LeadAPIView.as_view(),name="lead-convert",),
 ]
