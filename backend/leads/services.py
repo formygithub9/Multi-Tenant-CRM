@@ -10,6 +10,8 @@ from customers.models import Customer
 from contacts.models import Contact
 from core.exceptions import BadRequestException, NotFoundException
 
+from customers.services import CustomerService
+
 
 class LeadService:
 
@@ -131,7 +133,7 @@ class LeadService:
 
             customer = Customer.objects.create(
                 tenant_id=tenant_id,
-                customer_code=cls.generate_customer_code(tenant_id),
+                customer_code=CustomerService.generate_customer_code(tenant_id),
                 customer_type=Customer.CustomerType.BUSINESS,
                 contact_name=lead.contact_name,
                 company_name=lead.company_name,

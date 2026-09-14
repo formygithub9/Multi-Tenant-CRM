@@ -34,7 +34,7 @@ class LeadAPIView(APIView):
             status_code=status.HTTP_201_CREATED,
         )
 
-<<<<<<< HEAD
+
     def post(self, request, lead_id=None):
         membership = Membership.objects.get(user=request.user)
 
@@ -64,8 +64,8 @@ class LeadAPIView(APIView):
                 "customer": CustomerListSerializer(customer).data,
                 "contact": ContactListSerializer(contact).data,
             },
-            status_code=status.HTTP_200_OK,
-=======
+            status_code=status.HTTP_200_OK,)
+
     def get(self, request, lead_id=None):
         membership = Membership.objects.get(user=request.user,)
 
@@ -111,5 +111,4 @@ class LeadAPIView(APIView):
 
         return APIResponse.success(
             message="Lead deleted successfully.",
->>>>>>> ec8d21eaf1fe99d8d99c002e56ff16552feaee86
         )
