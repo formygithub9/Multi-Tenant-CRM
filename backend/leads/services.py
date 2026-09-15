@@ -1,5 +1,4 @@
 from django.db import transaction
-from core.exceptions import NotFoundException
 from core.db_context import get_current_database
 
 from leads.models import Lead
@@ -11,6 +10,8 @@ from contacts.models import Contact
 from core.exceptions import BadRequestException, NotFoundException
 
 from customers.services import CustomerService
+
+from django.db.models import Q
 
 
 class LeadService:
@@ -40,62 +41,6 @@ class LeadService:
 
             lead = Lead.objects.create(
                 **validated_data,
-            )
-
-        return lead
-
-    @classmethod
-    def get_leads(cls, tenant_id):
-
-        return Lead.objects.filter(
-            tenant_id=tenant_id,
-            is_active=True,
-        ).order_by("-id")
-
-    @classmethod
-    def get_lead_by_id(cls, tenant_id, lead_id):
-
-        lead = Lead.objects.filter(
-            tenant_id=tenant_id,
-            id=lead_id,
-            is_active=True,
-        ).first()
-
-        if not lead:
-            raise NotFoundException(
-                "Lead not found."
-            )
-
-        return lead
-
-    @classmethod
-    def update_lead(cls, lead, validated_data):
-
-        database = get_current_database()
-
-        with transaction.atomic(using=database):
-
-            for field, value in validated_data.items():
-                setattr(lead, field, value)
-
-            lead.save()
-
-        return lead
-
-    @classmethod
-    def delete_lead(cls, lead):
-
-        database = get_current_database()
-
-        with transaction.atomic(using=database):
-
-            lead.is_active = False
-
-            lead.save(
-                update_fields=[
-                    "is_active",
-                    "updated_at",
-                ],
             )
 
         return lead
@@ -164,3 +109,73 @@ class LeadService:
             )
 
         return customer, contact
+
+    @classmethod
+    def get_leads(cls, tenant_id, search=None, status=None):
+        queryset = Lead.objects.filter(
+            tenant_id=tenant_id,
+            is_active=True,
+        )
+
+        if search:
+            queryset = queryset.filter(
+                Q(contact_name__icontains=search)
+                | Q(company_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(lead_code__icontains=search)
+            )
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        return queryset.order_by("-id")
+
+    @classmethod
+    def get_lead_by_id(cls, tenant_id, lead_id):
+        lead = (
+            Lead.objects
+            .filter(
+                tenant_id=tenant_id,
+                id=lead_id,
+                is_active=True,
+            )
+            .first()
+        )
+
+        if not lead:
+            raise NotFoundException("Lead not found.")
+
+        return lead
+
+    @classmethod
+    def update_lead(cls, lead, validated_data):
+        database = get_current_database()
+
+        with transaction.atomic(using=database):
+            for field, value in validated_data.items():
+                setattr(lead, field, value)
+
+            lead.save(
+                update_fields=[
+                    *validated_data.keys(),
+                    "updated_at",
+                ]
+            )
+
+        return lead
+
+    @classmethod
+    def delete_lead(cls, lead):
+        database = get_current_database()
+
+        with transaction.atomic(using=database):
+            lead.is_active = False
+
+            lead.save(
+                update_fields=[
+                    "is_active",
+                    "updated_at",
+                ]
+            )
+
+        return lead
