@@ -6,7 +6,7 @@ from customers.models import Customer
 from leads.models import Lead
 from leads.services import LeadService
 from tenants.models import Tenant
-from core.exceptions import BadRequestException
+from core.exceptions import BadRequestException, NotFoundException
 
 
 class LeadConversionTest(TestCase):
@@ -122,3 +122,103 @@ class LeadConversionTest(TestCase):
             str(context.exception),
             "Lead has already been converted.",
         )
+
+class LeadTenantIsolationTest(TestCase):
+
+    databases = {"default", "shared_db"}
+
+    def setUp(self):
+        self.tenant_a = Tenant.objects.create(
+            name="Company A",
+            company_mobile="9999999991",
+            company_email="a@company.com",
+            database_alias="default",
+        )
+
+        self.tenant_b = Tenant.objects.create(
+            name="Company B",
+            company_mobile="9999999992",
+            company_email="b@company.com",
+            database_alias="default",
+        )
+
+        self.lead_a = Lead.objects.create(
+            tenant_id=self.tenant_a.id,
+            lead_code="LEAD000001",
+            contact_name="Rahul Sharma",
+            company_name="Company A",
+            email="rahul@a.com",
+            status=Lead.LeadStatus.QUALIFIED,
+        )
+
+        self.lead_b = Lead.objects.create(
+            tenant_id=self.tenant_b.id,
+            lead_code="LEAD000001",
+            contact_name="Amit Verma",
+            company_name="Company B",
+            email="amit@b.com",
+            status=Lead.LeadStatus.QUALIFIED,
+        )
+
+    def test_tenant_cannot_access_other_tenant_lead(self):
+        with self.assertRaises(NotFoundException) as context:
+            LeadService.get_lead_by_id(
+                tenant_id=self.tenant_a.id,
+                lead_id=self.lead_b.id,
+            )
+
+        self.assertEqual(
+            str(context.exception),
+            "Lead not found.",
+        )
+
+    def test_tenant_only_gets_own_leads(self):
+        leads = LeadService.get_leads(
+            tenant_id=self.tenant_a.id,
+        )
+
+        lead_ids = list(
+            leads.values_list("id", flat=True)
+        )
+
+        self.assertIn(
+            self.lead_a.id,
+            lead_ids,
+        )
+
+        self.assertNotIn(
+            self.lead_b.id,
+            lead_ids,
+        )
+
+    def test_tenant_cannot_convert_other_tenant_lead(self):
+        with self.assertRaises(NotFoundException) as context:
+            LeadService.convert_lead(
+                tenant_id=self.tenant_a.id,
+                lead_id=self.lead_b.id,
+            )
+
+        self.assertEqual(
+            str(context.exception),
+            "Lead not found.",
+        )
+
+        self.lead_b.refresh_from_db()
+
+        self.assertEqual(
+            self.lead_b.status,
+            Lead.LeadStatus.QUALIFIED,
+        )
+
+    def test_inactive_lead_cannot_be_accessed(self):
+        self.lead_a.is_active = False
+
+        self.lead_a.save(
+            update_fields=["is_active"]
+        )
+
+        with self.assertRaises(NotFoundException):
+            LeadService.get_lead_by_id(
+                tenant_id=self.tenant_a.id,
+                lead_id=self.lead_a.id,
+            )
