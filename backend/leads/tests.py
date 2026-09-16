@@ -1,4 +1,9 @@
 from django.test import TestCase
+from rest_framework.test import APITestCase
+from rest_framework import status
+
+from accounts.models import User
+from rbac.models import Membership, Role
 
 from common.models import Sequence
 from contacts.models import Contact
@@ -222,3 +227,152 @@ class LeadTenantIsolationTest(TestCase):
                 tenant_id=self.tenant_a.id,
                 lead_id=self.lead_a.id,
             )
+
+class LeadAPITest(APITestCase):
+
+    databases = {"default", "shared_db"}
+
+    def setUp(self):
+        self.tenant_a = Tenant.objects.create(
+            name="Company A",
+            company_mobile="8888888881",
+            company_email="api_a@company.com",
+            database_alias="default",
+        )
+
+        self.tenant_b = Tenant.objects.create(
+            name="Company B",
+            company_mobile="8888888882",
+            company_email="api_b@company.com",
+            database_alias="default",
+        )
+
+        self.role = Role.objects.create(
+            name="Admin",
+            tenant_id=self.tenant_a.id,
+        )
+
+        self.user = User.objects.create_user(
+            username="rahul",
+            email="rahul@test.com",
+            password="TestPassword123",
+        )
+
+        Membership.objects.create(
+            user=self.user,
+            tenant_id=self.tenant_a.id,
+            role=self.role,
+        )
+
+        self.client.force_authenticate(
+            user=self.user,
+        )
+
+    def test_create_lead(self):
+        response = self.client.post(
+            "/api/leads/",
+            {
+                "contact_name": "Amit Sharma",
+                "company_name": "ABC Pvt Ltd",
+                "email": "amit@abc.com",
+                "mobile": "9999999999",
+                "source": "WEBSITE",
+                "status": "QUALIFIED",
+                "notes": "Interested in CRM",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        self.assertTrue(
+            response.data["success"],
+        )
+
+        self.assertEqual(
+            response.data["data"]["contact_name"],
+            "Amit Sharma",
+        )
+
+        self.assertEqual(
+            response.data["data"]["lead_code"],
+            "LEAD000001",
+        )
+
+    def test_get_lead_list_only_returns_user_tenant_leads(self):
+        Lead.objects.create(
+            tenant_id=self.tenant_a.id,
+            lead_code="LEAD000001",
+            contact_name="Rahul Sharma",
+            company_name="Company A",
+            status=Lead.LeadStatus.NEW,
+        )
+
+        Lead.objects.create(
+            tenant_id=self.tenant_b.id,
+            lead_code="LEAD000001",
+            contact_name="Amit Verma",
+            company_name="Company B",
+            status=Lead.LeadStatus.NEW,
+        )
+
+        response = self.client.get(
+            "/api/leads/",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        response_data = response.data["data"]
+
+        returned_names = [
+            lead["contact_name"]
+            for lead in response_data
+        ]
+
+        self.assertIn(
+            "Rahul Sharma",
+            returned_names,
+        )
+
+        self.assertNotIn(
+            "Amit Verma",
+            returned_names,
+        )
+
+    def test_get_other_tenant_lead_returns_not_found(self):
+        lead_b = Lead.objects.create(
+            tenant_id=self.tenant_b.id,
+            lead_code="LEAD000001",
+            contact_name="Amit Verma",
+            company_name="Company B",
+            status=Lead.LeadStatus.NEW,
+        )
+
+        response = self.client.get(
+            f"/api/leads/{lead_b.id}/",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_unauthenticated_user_cannot_access_leads(self):
+        self.client.force_authenticate(
+            user=None,
+        )
+
+        response = self.client.get(
+            "/api/leads/",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )

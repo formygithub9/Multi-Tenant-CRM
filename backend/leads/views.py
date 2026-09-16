@@ -19,45 +19,34 @@ class LeadAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, lead_id=None):
+
+        if lead_id is not None:
+            return APIResponse.error(
+                message="POST method is not allowed for lead detail.",
+                status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        
         membership = Membership.objects.get(
             user=request.user,
         )
 
-        if lead_id is None:
-            data = request.data.copy()
-            data["tenant_id"] = membership.tenant_id
+        
+        data = request.data.copy()
+        data["tenant_id"] = membership.tenant_id
 
-            serializer = LeadCreateSerializer(
-                data=data,
-            )
-            serializer.is_valid(
-                raise_exception=True,
-            )
-
-            lead = serializer.save()
-
-            return APIResponse.success(
-                message="Lead created successfully.",
-                data=LeadCreateSerializer(lead).data,
-                status_code=status.HTTP_201_CREATED,
-            )
-
-        customer, contact = LeadService.convert_lead(
-            tenant_id=membership.tenant_id,
-            lead_id=lead_id,
+        serializer = LeadCreateSerializer(
+            data=data,
+        )
+        serializer.is_valid(
+            raise_exception=True,
         )
 
+        lead = serializer.save()
+
         return APIResponse.success(
-            message="Lead converted successfully.",
-            data={
-                "customer": CustomerListSerializer(
-                    customer,
-                ).data,
-                "contact": ContactListSerializer(
-                    contact,
-                ).data,
-            },
-            status_code=status.HTTP_200_OK,
+            message="Lead created successfully.",
+            data=LeadCreateSerializer(lead).data,
+            status_code=status.HTTP_201_CREATED,
         )
 
     def get(self, request, lead_id=None):
@@ -147,4 +136,32 @@ class LeadAPIView(APIView):
 
         return APIResponse.success(
             message="Lead deleted successfully.",
+        )
+
+class LeadConvertAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lead_id):
+
+        membership = Membership.objects.get(
+            user=request.user,
+        )
+
+        customer, contact = LeadService.convert_lead(
+            tenant_id=membership.tenant_id,
+            lead_id=lead_id,
+        )
+
+        return APIResponse.success(
+            message="Lead converted successfully.",
+            data={
+                "customer": CustomerListSerializer(
+                    customer,
+                ).data,
+                "contact": ContactListSerializer(
+                    contact,
+                ).data,
+            },
+            status_code=status.HTTP_200_OK,
         )
