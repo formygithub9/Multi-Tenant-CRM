@@ -64,20 +64,17 @@ class RolePermissionService:
 
     ROLE_PERMISSION_MAP = {
         "Admin": "ALL",
-
         "Manager": (
             "view",
             "create",
             "update",
             "export",
         ),
-
         "Sales": (
             "view",
             "create",
             "update",
         ),
-
         "Support": (
             "view",
         ),
@@ -85,30 +82,29 @@ class RolePermissionService:
 
     @classmethod
     def assign_permissions(cls, role):
-
         permission_config = cls.ROLE_PERMISSION_MAP.get(role.name)
 
         if not permission_config:
             return
 
         if permission_config == "ALL":
-
-            permissions = Permission.objects.filter(is_active=True)
-
-        else:
-            query = Q()
-
-            for permission_name in permission_config:
-                query |= Q(permission_type__name__iexact=permission_name)
-
             permissions = Permission.objects.filter(
-                query,
+                is_active=True
+            )
+        else:
+            permissions = Permission.objects.filter(
+                permission_type__name__in=[
+                    permission_name.title()
+                    for permission_name in permission_config
+                ],
                 is_active=True,
             )
 
         for permission in permissions:
-
             RolePermission.objects.get_or_create(
                 role=role,
                 permission=permission,
+                defaults={
+                    "is_active": True,
+                },
             )
