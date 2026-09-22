@@ -1,5 +1,9 @@
-from core.db_context import (set_current_database,clear_current_database,)
+from core.db_context import (
+    clear_current_database,
+    set_current_database,
+)
 from tenants.services import TenantService
+
 
 class TenantMiddleware:
 
@@ -10,14 +14,22 @@ class TenantMiddleware:
 
         company_mobile = request.headers.get("X-Company-Mobile")
 
-        if company_mobile:
-            database_alias = TenantService.get_database_alias(company_mobile)
+        request.tenant = None
+        request.tenant_id = None
 
-            if database_alias:
-                set_current_database(database_alias)
+        if company_mobile:
+            tenant = TenantService.get_tenant_by_company_mobile(
+                company_mobile
+            )
+
+            if tenant:
+                request.tenant = tenant
+                request.tenant_id = tenant.id
+                set_current_database(tenant.database_alias)
 
         try:
             response = self.get_response(request)
             return response
+
         finally:
             clear_current_database()

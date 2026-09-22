@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from leads.services import LeadService
+
 from leads.models import Lead
+from leads.services import LeadService
 
 
 class LeadCreateSerializer(serializers.ModelSerializer):
@@ -33,6 +34,7 @@ class LeadCreateSerializer(serializers.ModelSerializer):
             validated_data,
         )
 
+
 class LeadListSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -53,6 +55,7 @@ class LeadListSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+
 class LeadUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -70,14 +73,16 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
 
+        lead = self.instance
+
         email = attrs.get(
             "email",
-            self.instance.email,
+            lead.email,
         )
 
         mobile = attrs.get(
             "mobile",
-            self.instance.mobile,
+            lead.mobile,
         )
 
         if not email and not mobile:
@@ -85,60 +90,17 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
                 "Either email or mobile is required."
             )
 
-        return attrs
-
-class LeadListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lead
-        fields = (
-            "id",
-            "lead_code",
-            "contact_name",
-            "company_name",
-            "email",
-            "mobile",
-            "source",
-            "status",
-            "notes",
-            "is_active",
-            "created_at",
-            "updated_at",
-        )
-
-class LeadUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lead
-        fields = (
-            "contact_name",
-            "company_name",
-            "email",
-            "mobile",
-            "source",
-            "status",
-            "notes",
-        )
-
-    def validate(self, attrs):
-        lead = self.instance
+        if lead.status == Lead.LeadStatus.CONVERTED:
+            raise serializers.ValidationError(
+                "Converted leads cannot be updated."
+            )
 
         new_status = attrs.get(
             "status",
             lead.status,
         )
 
-        # Converted leads should not be modified
-        if lead.status == Lead.LeadStatus.CONVERTED:
-            raise serializers.ValidationError(
-                "Converted leads cannot be updated."
-            )
-
-        # A lead should not be manually changed back
-        # from CONVERTED because that state is controlled
-        # by the conversion workflow.
-        if (
-            new_status == Lead.LeadStatus.CONVERTED
-            and lead.status != Lead.LeadStatus.CONVERTED
-        ):
+        if new_status == Lead.LeadStatus.CONVERTED:
             raise serializers.ValidationError(
                 {
                     "status": (

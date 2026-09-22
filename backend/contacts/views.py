@@ -1,12 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from rbac.models import Membership
-from contacts.serializers import ContactCreateSerializer
 from contacts.services import ContactService
 from core.responses import APIResponse
 from .serializers import *
 from core.pagination import StandardPagination
+
+from rbac.services import MembershipService
 
 class ContactAPIView(APIView):
 
@@ -14,7 +14,7 @@ class ContactAPIView(APIView):
 
     def post(self, request):
 
-        membership = Membership.objects.get(user=request.user,)
+        membership = MembershipService.get_active_membership(user=request.user,tenant_id=request.tenant_id)
         data = request.data.copy()
         data["tenant_id"] = membership.tenant_id
         serializer = ContactCreateSerializer(data=data,)
@@ -28,7 +28,7 @@ class ContactAPIView(APIView):
 
     def get(self, request, contact_id=None):
 
-        membership = Membership.objects.get(user=request.user,)
+        membership = MembershipService.get_active_membership(user=request.user,tenant_id=request.tenant_id)
         if contact_id is not None:
             contact = ContactService.get_contact_by_id(tenant_id=membership.tenant_id,contact_id=contact_id,)
             serializer = ContactListSerializer(contact,)
@@ -48,7 +48,7 @@ class ContactAPIView(APIView):
 
     def patch(self, request, contact_id):
 
-        membership = Membership.objects.get(user=request.user,)
+        membership = MembershipService.get_active_membership(user=request.user,tenant_id=request.tenant_id)
         contact = ContactService.get_contact_by_id(tenant_id=membership.tenant_id,contact_id=contact_id,)
         serializer = ContactUpdateSerializer(contact,data=request.data,partial=True,)
         serializer.is_valid(raise_exception=True,)
@@ -61,7 +61,7 @@ class ContactAPIView(APIView):
 
     def delete(self, request, contact_id):
 
-        membership = Membership.objects.get(user=request.user,)
+        membership = MembershipService.get_active_membership(user=request.user,tenant_id=request.tenant_id)
         contact = ContactService.get_contact_by_id(tenant_id=membership.tenant_id,contact_id=contact_id,)
         ContactService.delete_contact(contact)
 

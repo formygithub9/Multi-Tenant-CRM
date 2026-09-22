@@ -23,26 +23,38 @@ class AuthenticationService:
         }
     
     @classmethod
-    def login(cls,company_mobile,email,password):
+    def login(cls, company_mobile, email, password):
 
         tenant = TenantService.get_tenant_by_company_mobile(company_mobile)
+
         if not tenant:
             raise BadRequestException("Invalid company mobile.")
         set_current_database(tenant.database_alias)
 
-        user = User.objects.filter(email=email).first()
+        user = (User.objects.filter(email=email,is_active=True,).first())
+
         if not user:
-            raise BadRequestException("Invalid email.")
+            raise BadRequestException("Invalid email or password.")
+
         if not user.check_password(password):
-            raise BadRequestException("Invalid password.")
-        if not user.is_active:
-            raise ForbiddenException("User account is inactive.")
+            raise BadRequestException("Invalid email or password.")
+
+        membership = (MembershipService.get_active_membership(user=user,tenant_id=tenant.id,))
 
         return {
             "user": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
+            },
+            "tenant": {
+                "id": tenant.id,
+                "name": tenant.name,
+                "company_mobile": tenant.company_mobile,
+            },
+            "role": {
+                "id": membership.role.id,
+                "name": membership.role.name,
             },
             "tokens": cls.generate_tokens(user),
         }

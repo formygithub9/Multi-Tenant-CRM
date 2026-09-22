@@ -1,21 +1,47 @@
 from django.db import transaction
+
 from common.models import Sequence
+from core.db_context import get_current_database
+
 
 class SequenceService:
+
     @classmethod
-    @transaction.atomic
     def get_next_number(cls, tenant_id, sequence_type):
 
-        sequence = (
-            Sequence.objects
-            .select_for_update()
-            .filter(tenant_id=tenant_id,sequence_type=sequence_type,).first())
+        database = get_current_database()
 
-        if not sequence:
-            sequence = Sequence.objects.create(tenant_id=tenant_id,sequence_type=sequence_type,next_number=2,)
-            return 1
+        with transaction.atomic(using=database):
 
-        current_number = sequence.next_number
-        sequence.next_number += 1
-        sequence.save(update_fields=["next_number"])
-        return current_number
+            sequence, _ = (
+                Sequence.objects
+                .using(database)
+                .get_or_create(
+                    tenant_id=tenant_id,
+                    sequence_type=sequence_type,
+                    defaults={
+                        "next_number": 2,
+                    },
+                )
+            )
+
+            sequence = (
+                Sequence.objects
+                .using(database)
+                .select_for_update()
+                .get(pk=sequence.pk)
+            )
+
+            current_number = sequence.next_number
+
+            sequence.next_number += 1
+
+            sequence.save(
+                using=database,
+                update_fields=[
+                    "next_number",
+                    "updated_at",
+                ],
+            )
+
+            return current_number

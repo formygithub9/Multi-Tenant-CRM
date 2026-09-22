@@ -4,72 +4,26 @@ from customers.models import Customer
 from customers.services import CustomerService
 
 
-class CustomerCreateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-
-        model = Customer
-
-        fields = (
-            "tenant_id",
-            "customer_type",
-            "contact_name",
-            "company_name",
-            "email",
-            "mobile",
-            "gst_number",
-            "pan_number",
-            "remarks",
-        )
-
-    def create(self, validated_data):
-        return CustomerService.create_customer(validated_data,)
-
-class CustomerListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Customer
-        fields = (
-            "id",
-            "customer_code",
-            "customer_type",
-            "contact_name",
-            "company_name",
-            "email",
-            "mobile",
-            "gst_number",
-            "pan_number",
-            "remarks",
-            "is_active",
-            "created_at",
-        )
-
-class CustomerUpdateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Customer
-
-        fields = (
-            "customer_type",
-            "contact_name",
-            "company_name",
-            "email",
-            "mobile",
-            "gst_number",
-            "pan_number",
-            "remarks",
-        )
+class CustomerValidationMixin:
 
     def validate(self, attrs):
 
         customer_type = attrs.get(
             "customer_type",
-            self.instance.customer_type,
+            getattr(
+                self.instance,
+                "customer_type",
+                None,
+            ),
         )
 
         gst_number = attrs.get(
             "gst_number",
-            self.instance.gst_number,
+            getattr(
+                self.instance,
+                "gst_number",
+                "",
+            ),
         )
 
         if (
@@ -97,3 +51,64 @@ class CustomerUpdateSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+class CustomerCreateSerializer(serializers.ModelSerializer):
+    tenant_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Customer
+        fields = (
+            "tenant_id",
+            "customer_type",
+            "contact_name",
+            "company_name",
+            "email",
+            "mobile",
+            "gst_number",
+            "pan_number",
+            "remarks",
+        )
+
+    def create(self, validated_data):
+        return CustomerService.create_customer(validated_data)
+
+
+class CustomerListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Customer
+
+        fields = (
+            "id",
+            "customer_code",
+            "customer_type",
+            "contact_name",
+            "company_name",
+            "email",
+            "mobile",
+            "gst_number",
+            "pan_number",
+            "remarks",
+            "is_active",
+            "created_at",
+        )
+
+
+class CustomerUpdateSerializer(CustomerValidationMixin,serializers.ModelSerializer,):
+
+    class Meta:
+
+        model = Customer
+
+        fields = (
+            "customer_type",
+            "contact_name",
+            "company_name",
+            "email",
+            "mobile",
+            "gst_number",
+            "pan_number",
+            "remarks",
+        )

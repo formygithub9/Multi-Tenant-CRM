@@ -6,17 +6,24 @@ from contacts.serializers import ContactListSerializer
 from core.pagination import StandardPagination
 from core.responses import APIResponse
 from customers.serializers import CustomerListSerializer
-from leads.serializers import (
-    LeadCreateSerializer,
-    LeadListSerializer,
-    LeadUpdateSerializer,
-)
+from leads.serializers import (LeadCreateSerializer,LeadListSerializer,LeadUpdateSerializer,)
 from leads.services import LeadService
-from rbac.models import Membership
+from rbac.permissions import HasPermission
+from rbac.services import MembershipService
 
 class LeadAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        HasPermission,
+    ]
+
+    required_permissions = {
+        "GET": "leads.view",
+        "POST": "leads.create",
+        "PATCH": "leads.update",
+        "DELETE": "leads.delete",
+    }
 
     def post(self, request, lead_id=None):
 
@@ -26,11 +33,11 @@ class LeadAPIView(APIView):
                 status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
         
-        membership = Membership.objects.get(
+        membership = MembershipService.get_active_membership(
             user=request.user,
+            tenant_id=request.tenant_id,
         )
-
-        
+ 
         data = request.data.copy()
         data["tenant_id"] = membership.tenant_id
 
@@ -50,8 +57,9 @@ class LeadAPIView(APIView):
         )
 
     def get(self, request, lead_id=None):
-        membership = Membership.objects.get(
+        membership = MembershipService.get_active_membership(
             user=request.user,
+            tenant_id=request.tenant_id,
         )
 
         if lead_id is not None:
@@ -93,8 +101,9 @@ class LeadAPIView(APIView):
         )
 
     def patch(self, request, lead_id):
-        membership = Membership.objects.get(
+        membership = MembershipService.get_active_membership(
             user=request.user,
+            tenant_id=request.tenant_id,
         )
 
         lead = LeadService.get_lead_by_id(
@@ -123,8 +132,9 @@ class LeadAPIView(APIView):
         )
 
     def delete(self, request, lead_id):
-        membership = Membership.objects.get(
+        membership = MembershipService.get_active_membership(
             user=request.user,
+            tenant_id=request.tenant_id,
         )
 
         lead = LeadService.get_lead_by_id(
@@ -140,12 +150,20 @@ class LeadAPIView(APIView):
 
 class LeadConvertAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        HasPermission,
+    ]
+
+    required_permissions = {
+        "POST": "leads.approve",
+    }
 
     def post(self, request, lead_id):
 
-        membership = Membership.objects.get(
+        membership = MembershipService.get_active_membership(
             user=request.user,
+            tenant_id=request.tenant_id,
         )
 
         customer, contact = LeadService.convert_lead(

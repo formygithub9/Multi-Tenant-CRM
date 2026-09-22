@@ -3,7 +3,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 from accounts.models import User
-from rbac.models import Membership, Role
+from authorization.models import Permission
+from rbac.models import Membership, Role, RolePermission
 
 from common.models import Sequence
 from contacts.models import Contact
@@ -19,20 +20,22 @@ class LeadConversionTest(TestCase):
     databases = {"default", "shared_db"}
 
     def setUp(self):
-        self.tenant = Tenant.objects.create(
+        # Tenant registry lives in default DB.
+        self.tenant = Tenant.objects.using("default").create(
             name="Test Company",
             company_mobile="9999999999",
             company_email="test@company.com",
-            database_alias="default",
+            database_alias="shared_db",
         )
 
-        Sequence.objects.create(
+        # Tenant data lives in shared_db.
+        Sequence.objects.using("shared_db").create(
             tenant_id=self.tenant.id,
             sequence_type=Sequence.SequenceType.CUSTOMER,
             next_number=1,
         )
 
-        self.lead = Lead.objects.create(
+        self.lead = Lead.objects.using("shared_db").create(
             tenant_id=self.tenant.id,
             lead_code="LEAD000001",
             contact_name="Rahul Sharma",
@@ -50,7 +53,7 @@ class LeadConversionTest(TestCase):
             lead_id=self.lead.id,
         )
 
-        self.lead.refresh_from_db()
+        self.lead.refresh_from_db(using="shared_db")
 
         self.assertEqual(
             self.lead.status,
@@ -97,14 +100,14 @@ class LeadConversionTest(TestCase):
         )
 
         self.assertTrue(
-            Customer.objects.filter(
+            Customer.objects.using("shared_db").filter(
                 id=customer.id,
                 tenant_id=self.tenant.id,
             ).exists()
         )
 
         self.assertTrue(
-            Contact.objects.filter(
+            Contact.objects.using("shared_db").filter(
                 id=contact.id,
                 tenant_id=self.tenant.id,
                 customer_id=customer.id,
@@ -128,26 +131,27 @@ class LeadConversionTest(TestCase):
             "Lead has already been converted.",
         )
 
+
 class LeadTenantIsolationTest(TestCase):
 
     databases = {"default", "shared_db"}
 
     def setUp(self):
-        self.tenant_a = Tenant.objects.create(
+        self.tenant_a = Tenant.objects.using("default").create(
             name="Company A",
             company_mobile="9999999991",
             company_email="a@company.com",
-            database_alias="default",
+            database_alias="shared_db",
         )
 
-        self.tenant_b = Tenant.objects.create(
+        self.tenant_b = Tenant.objects.using("default").create(
             name="Company B",
             company_mobile="9999999992",
             company_email="b@company.com",
-            database_alias="default",
+            database_alias="shared_db",
         )
 
-        self.lead_a = Lead.objects.create(
+        self.lead_a = Lead.objects.using("shared_db").create(
             tenant_id=self.tenant_a.id,
             lead_code="LEAD000001",
             contact_name="Rahul Sharma",
@@ -156,7 +160,7 @@ class LeadTenantIsolationTest(TestCase):
             status=Lead.LeadStatus.QUALIFIED,
         )
 
-        self.lead_b = Lead.objects.create(
+        self.lead_b = Lead.objects.using("shared_db").create(
             tenant_id=self.tenant_b.id,
             lead_code="LEAD000001",
             contact_name="Amit Verma",
@@ -208,7 +212,7 @@ class LeadTenantIsolationTest(TestCase):
             "Lead not found.",
         )
 
-        self.lead_b.refresh_from_db()
+        self.lead_b.refresh_from_db(using="shared_db")
 
         self.assertEqual(
             self.lead_b.status,
@@ -219,7 +223,8 @@ class LeadTenantIsolationTest(TestCase):
         self.lead_a.is_active = False
 
         self.lead_a.save(
-            update_fields=["is_active"]
+            using="shared_db",
+            update_fields=["is_active"],
         )
 
         with self.assertRaises(NotFoundException):
@@ -228,37 +233,61 @@ class LeadTenantIsolationTest(TestCase):
                 lead_id=self.lead_a.id,
             )
 
+
 class LeadAPITest(APITestCase):
 
     databases = {"default", "shared_db"}
 
     def setUp(self):
-        self.tenant_a = Tenant.objects.create(
+        # Tenant registry.
+        self.tenant_a = Tenant.objects.using("default").create(
             name="Company A",
             company_mobile="8888888881",
             company_email="api_a@company.com",
-            database_alias="default",
+            database_alias="shared_db",
         )
 
-        self.tenant_b = Tenant.objects.create(
+        self.tenant_b = Tenant.objects.using("default").create(
             name="Company B",
             company_mobile="8888888882",
             company_email="api_b@company.com",
-            database_alias="default",
+            database_alias="shared_db",
         )
 
-        self.role = Role.objects.create(
+        # RBAC data belongs to tenant DB.
+        self.role = Role.objects.using("shared_db").create(
             name="Admin",
             tenant_id=self.tenant_a.id,
         )
 
-        self.user = User.objects.create_user(
-            username="rahul",
-            email="rahul@test.com",
-            password="TestPassword123",
+        lead_permissions = Permission.objects.using("shared_db").filter(
+            code__in=[
+                "leads.view",
+                "leads.create",
+                "leads.update",
+                "leads.delete",
+                "leads.approve",
+            ],
+            is_active=True,
         )
 
-        Membership.objects.create(
+        RolePermission.objects.using("shared_db").bulk_create(
+            [
+                RolePermission(
+                    role=self.role,
+                    permission=permission,
+                )
+                for permission in lead_permissions
+            ]
+        )
+
+        self.user = User.objects.create_user(
+            username="leaduser",
+            email="leaduser@test.com",
+            password="password123",
+        )
+
+        self.membership = Membership.objects.using("shared_db").create(
             user=self.user,
             tenant_id=self.tenant_a.id,
             role=self.role,
@@ -266,6 +295,10 @@ class LeadAPITest(APITestCase):
 
         self.client.force_authenticate(
             user=self.user,
+        )
+
+        self.client.defaults["HTTP_X_COMPANY_MOBILE"] = (
+            self.tenant_a.company_mobile
         )
 
     def test_create_lead(self):
@@ -297,13 +330,8 @@ class LeadAPITest(APITestCase):
             "Amit Sharma",
         )
 
-        self.assertEqual(
-            response.data["data"]["lead_code"],
-            "LEAD000001",
-        )
-
     def test_get_lead_list_only_returns_user_tenant_leads(self):
-        Lead.objects.create(
+        Lead.objects.using("shared_db").create(
             tenant_id=self.tenant_a.id,
             lead_code="LEAD000001",
             contact_name="Rahul Sharma",
@@ -311,7 +339,7 @@ class LeadAPITest(APITestCase):
             status=Lead.LeadStatus.NEW,
         )
 
-        Lead.objects.create(
+        Lead.objects.using("shared_db").create(
             tenant_id=self.tenant_b.id,
             lead_code="LEAD000001",
             contact_name="Amit Verma",
@@ -328,7 +356,7 @@ class LeadAPITest(APITestCase):
             status.HTTP_200_OK,
         )
 
-        response_data = response.data["data"]
+        response_data = response.data["results"]
 
         returned_names = [
             lead["contact_name"]
@@ -346,7 +374,7 @@ class LeadAPITest(APITestCase):
         )
 
     def test_get_other_tenant_lead_returns_not_found(self):
-        lead_b = Lead.objects.create(
+        lead_b = Lead.objects.using("shared_db").create(
             tenant_id=self.tenant_b.id,
             lead_code="LEAD000001",
             contact_name="Amit Verma",

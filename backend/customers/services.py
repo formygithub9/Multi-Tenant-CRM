@@ -1,7 +1,10 @@
-from customers.models import Customer
 from django.db import transaction
+
+from customers.models import Customer
+
 from common.models import Sequence
 from common.services import SequenceService
+
 from core.db_context import get_current_database
 from core.exceptions import NotFoundException
 
@@ -26,22 +29,52 @@ class CustomerService:
         with transaction.atomic(using=database):
 
             tenant_id = validated_data["tenant_id"]
-            validated_data["customer_code"] = cls.generate_customer_code(tenant_id,)
-            customer = Customer.objects.create(**validated_data,)
 
-            return customer
+            validated_data["customer_code"] = (
+                cls.generate_customer_code(tenant_id)
+            )
+
+            customer = Customer.objects.using(database).create(
+                **validated_data
+            )
+
+        return customer
 
     @classmethod
     def get_customers(cls, tenant_id):
-        return (Customer.objects.filter(tenant_id=tenant_id,is_active=True,).order_by("-id"))
+
+        database = get_current_database()
+
+        return (
+            Customer.objects
+            .using(database)
+            .filter(
+                tenant_id=tenant_id,
+                is_active=True,
+            )
+            .order_by("-id")
+        )
 
     @classmethod
     def get_customer_by_id(cls, tenant_id, customer_id):
 
-        customer = Customer.objects.filter(tenant_id=tenant_id,id=customer_id,is_active=True,).first()
+        database = get_current_database()
+
+        customer = (
+            Customer.objects
+            .using(database)
+            .filter(
+                tenant_id=tenant_id,
+                id=customer_id,
+                is_active=True,
+            )
+            .first()
+        )
 
         if not customer:
-            raise NotFoundException("Customer not found.")
+            raise NotFoundException(
+                "Customer not found."
+            )
 
         return customer
 
@@ -56,10 +89,11 @@ class CustomerService:
                 setattr(customer, field, value)
 
             customer.save(
+                using=database,
                 update_fields=[
                     *validated_data.keys(),
                     "updated_at",
-                ]
+                ],
             )
 
         return customer
@@ -72,6 +106,13 @@ class CustomerService:
         with transaction.atomic(using=database):
 
             customer.is_active = False
-            customer.save(update_fields=["is_active", "updated_at"])
+
+            customer.save(
+                using=database,
+                update_fields=[
+                    "is_active",
+                    "updated_at",
+                ],
+            )
 
         return customer

@@ -2,7 +2,7 @@ from django.db import transaction
 from core.exceptions import NotFoundException
 from core.db_context import get_current_database
 from contacts.models import Contact
-
+from customers.models import Customer
 
 class ContactService:
 
@@ -11,7 +11,28 @@ class ContactService:
         database = get_current_database()
 
         with transaction.atomic(using=database):
-            contact = Contact.objects.create(**validated_data,)
+            tenant_id = validated_data["tenant_id"]
+            customer_id = validated_data["customer_id"]
+
+            customer_exists = (
+                Customer.objects
+                .using(database)
+                .filter(
+                    id=customer_id,
+                    tenant_id=tenant_id,
+                    is_active=True,
+                )
+                .exists()
+            )
+
+            if not customer_exists:
+                raise NotFoundException(
+                    "Customer not found."
+                )
+
+            contact = Contact.objects.using(database).create(
+                **validated_data
+            )
 
         return contact
 

@@ -8,7 +8,6 @@ class ContactCreateSerializer(serializers.ModelSerializer):
         model = Contact
 
         fields = (
-            "tenant_id",
             "customer_id",
             "first_name",
             "last_name",

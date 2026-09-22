@@ -1,8 +1,8 @@
 from rest_framework.permissions import BasePermission
-from rest_framework.exceptions import PermissionDenied
 
 from authorization.models import Permission
 from rbac.models import Membership, RolePermission
+
 
 class HasPermission(BasePermission):
 
@@ -10,27 +10,74 @@ class HasPermission(BasePermission):
 
     def has_permission(self, request, view):
 
-        required_permission = getattr(view, "required_permission", None)
+        required_permissions = getattr(
+            view,
+            "required_permissions",
+            {},
+        )
+
+        required_permission = required_permissions.get(
+            request.method,
+        )
 
         if not required_permission:
             return True
 
-        membership = Membership.objects.filter(user=request.user,is_active=True,).select_related("role").first()
+        tenant_id = getattr(
+            request,
+            "tenant_id",
+            None,
+        )
 
-        if not membership:
-            self.message = "User is not assigned to any tenant."
+        if not tenant_id:
+            self.message = "Tenant context is required."
             return False
 
-        permission = Permission.objects.filter(code__iexact=required_permission,is_active=True,).first()
+        membership = (
+            Membership.objects
+            .select_related("role")
+            .filter(
+                user=request.user,
+                tenant_id=tenant_id,
+                is_active=True,
+            )
+            .first()
+        )
+
+        if not membership:
+            self.message = (
+                "You are not a member of this tenant."
+            )
+            return False
+
+        permission = (
+            Permission.objects
+            .filter(
+                code__iexact=required_permission,
+                is_active=True,
+            )
+            .first()
+        )
 
         if not permission:
             self.message = "Permission does not exist."
             return False
 
-        role_permission = RolePermission.objects.filter(role=membership.role,permission=permission,).exists()
+        has_permission = (
+            RolePermission.objects
+            .filter(
+                role=membership.role,
+                permission=permission,
+                is_active=True,
+            )
+            .exists()
+        )
 
-        if not role_permission:
-            self.message = "You do not have permission to perform this action."
+        if not has_permission:
+            self.message = (
+                "You do not have permission "
+                "to perform this action."
+            )
             return False
-        
+
         return True

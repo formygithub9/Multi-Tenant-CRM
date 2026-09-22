@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rbac.models import Role, Membership, RolePermission
 from authorization.models import Permission
+from core.exceptions import ForbiddenException
 
 class RoleService:
 
@@ -37,6 +38,27 @@ class MembershipService:
             tenant_id=tenant.id,
             role=role,
         )
+
+    @staticmethod
+    def get_active_membership(user, tenant_id):
+
+        membership = (
+            Membership.objects
+            .select_related("role")
+            .filter(
+                user=user,
+                tenant_id=tenant_id,
+                is_active=True,
+            )
+            .first()
+        )
+
+        if not membership:
+            raise ForbiddenException(
+                "You are not a member of this tenant."
+            )
+
+        return membership
 
 class RolePermissionService:
 
