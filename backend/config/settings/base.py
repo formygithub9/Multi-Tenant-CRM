@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "common",
     "contacts",
     "leads",
+    "vendors",
 
     # Third-party Apps
     "rest_framework",
