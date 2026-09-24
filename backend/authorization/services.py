@@ -6,6 +6,7 @@ class AuthorizationService:
         "Leads",
         "Vendors",
         "Products",
+        "Deals",
         "Orders",
         "Invoices",
         "Inventory",

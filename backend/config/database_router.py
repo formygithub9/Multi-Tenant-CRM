@@ -15,6 +15,8 @@ class DatabaseRouter:
         "contacts",
         "leads",
         "vendors",
+        "products",
+        "deals",
 
         "auth",
         "contenttypes",
