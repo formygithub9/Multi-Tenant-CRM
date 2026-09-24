@@ -17,6 +17,7 @@ class DatabaseRouter:
         "vendors",
         "products",
         "deals",
+        "quotes",
 
         "auth",
         "contenttypes",
