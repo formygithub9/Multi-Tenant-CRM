@@ -22,6 +22,7 @@ class Sequence(models.Model):
         INVOICE = "INVOICE", "Invoice"
         DEAL = "DEAL", "Deal"
         QUOTE = "QUOTE", "Quote"
+        ORDER = "ORDER", "Order"
 
     id = models.BigAutoField(primary_key=True)
 

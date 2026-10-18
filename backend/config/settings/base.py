@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "products",
     "deals",
     "quotes",
+    "orders",
 
     # Third-party Apps
     "rest_framework",
