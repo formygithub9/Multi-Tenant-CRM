@@ -18,6 +18,12 @@ class DatabaseRouter:
         "products",
         "deals",
         "quotes",
+        "orders",
+        "invoices",
+        "payments",
+        "activities",
+        "notifications",
+        "dashboard",
 
         "auth",
         "contenttypes",

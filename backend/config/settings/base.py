@@ -51,6 +51,11 @@ INSTALLED_APPS = [
     "deals",
     "quotes",
     "orders",
+    "invoices",
+    "payments",
+    "activities",
+    "notifications",
+    "dashboard",
 
     # Third-party Apps
     "rest_framework",
