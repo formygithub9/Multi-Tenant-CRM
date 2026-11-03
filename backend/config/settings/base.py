@@ -31,7 +31,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -58,7 +58,9 @@ INSTALLED_APPS = [
     "dashboard",
 
     # Third-party Apps
+    "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     
     # Django Apps
     "django.contrib.admin",
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -213,4 +216,52 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "EXCEPTION_HANDLER": "core.exception_handler.custom_exception_handler",
+}
+
+from corsheaders.defaults import default_headers
+from datetime import timedelta
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "x-company-mobile",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Refresh JWT cookie settings.
+JWT_REFRESH_COOKIE_NAME = env.str(
+    "JWT_REFRESH_COOKIE_NAME",
+    default="crm_refresh",
+)
+JWT_REFRESH_COOKIE_PATH = "/api/accounts/"
+JWT_REFRESH_COOKIE_SAMESITE = "Lax"
+JWT_REFRESH_COOKIE_SECURE = env.bool(
+    "JWT_REFRESH_COOKIE_SECURE",
+    default=not DEBUG,
+)
+
+# CSRF cookie settings.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = env.bool(
+    "CSRF_COOKIE_SECURE",
+    default=not DEBUG,
+)
+
+# Short-lived access tokens and rotating refresh tokens.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }

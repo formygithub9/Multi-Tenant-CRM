@@ -14,6 +14,7 @@ class AuthorizationService:
         "Warehouse",
         "Assets",
         "Employees",
+        "Dashboard",
         "Reports",
         "Settings",
     )

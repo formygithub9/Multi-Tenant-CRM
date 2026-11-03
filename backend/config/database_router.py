@@ -29,6 +29,7 @@ class DatabaseRouter:
         "contenttypes",
         "admin",
         "sessions",
+        "token_blacklist",
     }
 
     def db_for_read(self, model, **hints):
